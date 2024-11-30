@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>OCR with Flask</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body>
+
+    <div class="container mt-5">
+        <h2 class="mb-4">OCR with Flask</h2>
+
+        <form id="uploadForm" action="/upload" method="post" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label for="file" class="form-label">Upload Image</label>
+                <input type="file" class="form-control" id="file" name="file" accept="image/*" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+
+        <div class="mt-5">
+            <h4>Extracted Text:</h4>
+            <div  id="extractedText"></div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS and Popper.js -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Custom JavaScript -->
+    <script>
+        // Function to handle paste events
+        function handlePaste(event) 
+        {
+            const items = (event.clipboardData || event.originalEvent.clipboardData).items;
+            for (const item of items) 
+            {
+                if (item.kind === 'file' && item.type.includes('image')) 
+                {
+                    const blob = item.getAsFile();
+                    const formData = new FormData();
+                    formData.append('file', blob);
+
+                    // Submit the form with the pasted image
+                    fetch('/upload', {
+                        method: 'POST',
+                        headers: {
+                            accept: 'application/json',
+                        },
+                        body: formData,
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log("Data", data); // Log the data for debugging
+                        // Display the extracted text and image
+                        document.getElementById('file').value = '';  // Clear the file input
+                        document.getElementById('extractedText').innerHTML = data.extracted_text;
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert(error)
+                    });
+
+                    // Prevent the default paste behavior
+                    event.preventDefault();
+                    break;
+                }
+            }
+        }
+
+        // Add paste event listener to the document
+        document.addEventListener('paste', handlePaste);
+
+        // Submit the form on Ctrl + V
+        document.addEventListener('keydown', function (event) {
+            if (event.ctrlKey && event.key === 'v') {
+                document.getElementById('uploadForm').submit();
+            }
+        });
+    </script>
+
+</body>
+
+</html>
